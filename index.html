@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量化分析辅助决策</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 头部 -->
+    <header class="header">
+        <div class="container">
+            <h1>量化分析辅助决策</h1>
+            <p class="subtitle">数据驱动 · 理性决策 · 风险可控</p>
+            <p class="header-desc">通过量化模型分析市场趋势强度、评估风险水平，并推演不同策略的适配度，辅助投资决策</p>
+
+            <!-- 搜索栏 -->
+            <div class="search-bar-container">
+                <input type="text" id="search-input" class="search-input" placeholder="搜索策略、指标、术语..." oninput="handleSearch(this.value)">
+                <button class="search-clear-btn" id="search-clear-btn" onclick="clearSearch()" style="display: none;">×</button>
+            </div>
+
+            <!-- 右侧操作区 -->
+            <div class="header-actions">
+                <!-- 用户状态栏 -->
+                <div id="user-status-bar" class="user-status-bar">
+                    <!-- 未登录状态 -->
+                    <div id="user-logged-out" class="user-status-section" style="display: none;">
+                        <a href="login.html" class="user-status-link">登录</a>
+                        <span class="user-status-divider">|</span>
+                        <a href="register.html" class="user-status-link">注册</a>
+                    </div>
+                    <!-- 已登录状态 -->
+                    <div id="user-logged-in" class="user-status-section" style="display: none;">
+                        <span id="user-display-name" class="user-display-name"></span>
+                        <span id="user-pro-badge" class="user-pro-badge" style="display: none;">Pro</span>
+                        <span class="user-status-divider">|</span>
+                        <a href="javascript:void(0)" onclick="logout()" class="user-status-link">退出</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container">
+        <!-- 使用说明 -->
+        <section class="usage-guide">
+            <h2 class="usage-guide-title">使用说明</h2>
+            <div class="usage-guide-list">
+                <div class="usage-guide-item">
+                    <div class="usage-guide-number">1</div>
+                    <div class="usage-guide-content">
+                        <h3 class="usage-guide-item-title">查看趋势强度评分</h3>
+                        <p class="usage-guide-item-desc">综合评分反映当前市场趋势强度，分数越高趋势越强。可查看各子因子（趋势方向、动能、稳定性）的得分详情。</p>
+                    </div>
+                </div>
+                <div class="usage-guide-item">
+                    <div class="usage-guide-number">2</div>
+                    <div class="usage-guide-content">
+                        <h3 class="usage-guide-item-title">关注风险评估等级</h3>
+                        <p class="usage-guide-item-desc">根据最大回撤、波动率、趋势衰减等指标综合评估风险。高风险时建议降低仓位或观望。</p>
+                    </div>
+                </div>
+                <div class="usage-guide-item">
+                    <div class="usage-guide-number">3</div>
+                    <div class="usage-guide-content">
+                        <h3 class="usage-guide-item-title">参考策略适配分析</h3>
+                        <p class="usage-guide-item-desc">根据当前市场状态，分析趋势跟随、波段交易、抄底反弹等策略的适配度，选择适合的操作风格。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="main">
+            <!-- 市场状态概览 -->
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title">市场状态概览</h2>
+                    <span class="card-icon">📊</span>
+                </div>
+                <div class="market-index">
+                    <div id="shanghai-index" class="index-item">
+                        <!-- 上证指数 -->
+                    </div>
+                    <div id="shenzhen-index" class="index-item">
+                        <!-- 深证成指 -->
+                    </div>
+                    <div id="chinext-index" class="index-item">
+                        <!-- 创业板指 -->
+                    </div>
+                    <div class="volume">
+                        <span>两市成交额</span>
+                        <span id="total-volume" class="volume-value">--</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 趋势强度评分 -->
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title">趋势强度评分</h2>
+                    <span class="card-icon">📈</span>
+                </div>
+                <div class="trend-score">
+                    <!-- 综合评分 -->
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <span id="overall-score" class="score-value">--</span>
+                            <span class="score-label">综合评分</span>
+                        </div>
+                    </div>
+
+                    <!-- 子因子得分 -->
+                    <div class="factors-section pro-factor-section">
+                        <h3 class="factors-title">评分构成（权重）<span class="pro-badge-small">Pro</span></h3>
+                        <!-- 子因子 Pro 锁定遮罩 -->
+                        <div class="factor-lock-overlay">
+                            <div class="factor-lock-content">
+                                <div class="factor-lock-icon">🔒</div>
+                                <p class="factor-lock-message">Pro 功能：获取完整策略分析与情景推演，帮助你更安全决策</p>
+                                <button class="factor-lock-btn" onclick="requestTemporaryUnlock()">临时解锁体验</button>
+                            </div>
+                        </div>
+                        <div class="factors-list">
+                            <!-- 趋势方向 (40%) -->
+                            <div class="factor-item">
+                                <div class="factor-header">
+                                    <span class="factor-name">趋势方向</span>
+                                    <span class="factor-weight">40%</span>
+                                    <span id="factor-direction-value" class="factor-value">--</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="factor-direction-bar" class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="factor-desc">短期均线 vs 长期均线</div>
+                            </div>
+
+                            <!-- 趋势动能 (35%) -->
+                            <div class="factor-item">
+                                <div class="factor-header">
+                                    <span class="factor-name">趋势动能</span>
+                                    <span class="factor-weight">35%</span>
+                                    <span id="factor-momentum-value" class="factor-value">--</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="factor-momentum-bar" class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="factor-desc">近5日涨跌幅</div>
+                            </div>
+
+                            <!-- 稳定性 (25%) -->
+                            <div class="factor-item">
+                                <div class="factor-header">
+                                    <span class="factor-name">稳定性</span>
+                                    <span class="factor-weight">25%</span>
+                                    <span id="factor-stability-value" class="factor-value">--</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="factor-stability-bar" class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="factor-desc">价格波动率（标准差）</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 评分解释 -->
+                    <div class="explanation-box">
+                        <div class="explanation-title">📊 评分解析</div>
+                        <p id="score-explanation" class="explanation-text">正在计算...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 风险评估 -->
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title">风险评估</h2>
+                    <span class="card-icon">⚡</span>
+                </div>
+                <div class="risk-assessment">
+                    <!-- 总体风险等级 -->
+                    <div class="risk-level">
+                        <span id="risk-badge" class="risk-badge">--</span>
+                    </div>
+
+                    <!-- 风险指标列表 -->
+                    <div class="risk-indicators-section">
+                        <h3 class="risk-indicators-title">风险指标分析</h3>
+                        <div class="risk-indicators-list">
+                            <!-- 最大回撤 -->
+                            <div class="risk-indicator-item">
+                                <div class="risk-indicator-header">
+                                    <span class="risk-indicator-name">最大回撤</span>
+                                    <span id="risk-maxDrawdown-value" class="risk-indicator-value">--</span>
+                                </div>
+                                <div class="risk-bar">
+                                    <div id="risk-maxDrawdown-bar" class="risk-bar-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="risk-indicator-desc">峰值到谷值最大跌幅</div>
+                            </div>
+
+                            <!-- 波动率风险 -->
+                            <div class="risk-indicator-item">
+                                <div class="risk-indicator-header">
+                                    <span class="risk-indicator-name">波动率风险</span>
+                                    <span id="risk-volatility-value" class="risk-indicator-value">--</span>
+                                </div>
+                                <div class="risk-bar">
+                                    <div id="risk-volatility-bar" class="risk-bar-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="risk-indicator-desc">价格波动程度（标准差）</div>
+                            </div>
+
+                            <!-- 趋势衰减风险 -->
+                            <div class="risk-indicator-item">
+                                <div class="risk-indicator-header">
+                                    <span class="risk-indicator-name">趋势衰减风险</span>
+                                    <span id="risk-trendDecay-value" class="risk-indicator-value">--</span>
+                                </div>
+                                <div class="risk-bar">
+                                    <div id="risk-trendDecay-bar" class="risk-bar-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="risk-indicator-desc">短期均线斜率变化</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 风险提示说明 -->
+                    <div class="risk-explanation-box">
+                        <div class="explanation-title">⚠️ 风险提示</div>
+                        <p id="risk-explanation" class="explanation-text">正在计算...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 策略适配分析 -->
+            <section class="card pro-card">
+                <div class="card-header">
+                    <h2 class="card-title">策略适配分析</h2>
+                    <span class="card-icon">🎯</span>
+                    <span class="pro-badge">Pro</span>
+                </div>
+                <div class="pro-card-inner">
+                    <div class="strategy-fit">
+                    <!-- 策略列表 -->
+                    <div class="strategy-list">
+                        <!-- 趋势跟随策略 -->
+                        <div class="strategy-item">
+                            <div class="strategy-header">
+                                <span class="strategy-name">趋势跟随策略</span>
+                                <span id="strategy-trend-following-badge" class="strategy-fit-badge">--</span>
+                            </div>
+                            <div class="strategy-fit-bar-container">
+                                <div id="strategy-trend-following-bar" class="strategy-fit-bar" style="width: 0%"></div>
+                            </div>
+                            <div class="strategy-footer">
+                                <span class="strategy-score-label">适配度</span>
+                                <span id="strategy-trend-following-score" class="strategy-score">--</span>
+                            </div>
+                            <p id="strategy-trend-following-reason" class="strategy-reason">正在分析...</p>
+                        </div>
+
+                        <!-- 波段交易策略 -->
+                        <div class="strategy-item">
+                            <div class="strategy-header">
+                                <span class="strategy-name">波段交易策略</span>
+                                <span id="strategy-swing-trading-badge" class="strategy-fit-badge">--</span>
+                            </div>
+                            <div class="strategy-fit-bar-container">
+                                <div id="strategy-swing-trading-bar" class="strategy-fit-bar" style="width: 0%"></div>
+                            </div>
+                            <div class="strategy-footer">
+                                <span class="strategy-score-label">适配度</span>
+                                <span id="strategy-swing-trading-score" class="strategy-score">--</span>
+                            </div>
+                            <p id="strategy-swing-trading-reason" class="strategy-reason">正在分析...</p>
+                        </div>
+
+                        <!-- 抄底反弹策略 -->
+                        <div class="strategy-item">
+                            <div class="strategy-header">
+                                <span class="strategy-name">抄底反弹策略</span>
+                                <span id="strategy-dip-buying-badge" class="strategy-fit-badge">--</span>
+                            </div>
+                            <div class="strategy-fit-bar-container">
+                                <div id="strategy-dip-buying-bar" class="strategy-fit-bar" style="width: 0%"></div>
+                            </div>
+                            <div class="strategy-footer">
+                                <span class="strategy-score-label">适配度</span>
+                                <span id="strategy-dip-buying-score" class="strategy-score">--</span>
+                            </div>
+                            <p id="strategy-dip-buying-reason" class="strategy-reason">正在分析...</p>
+                        </div>
+                    </div>
+
+                    <!-- 操作风格建议 -->
+                    <div class="operation-advice-box">
+                        <div class="explanation-title">💡 操作风格建议</div>
+                        <p id="operation-advice" class="explanation-text">正在生成...</p>
+                    </div>
+                </div>
+                </div>
+                <!-- Pro 锁定遮罩 -->
+                <div class="pro-lock-overlay">
+                    <div class="pro-lock-content">
+                        <div class="pro-lock-icon">🔒</div>
+                        <h3 class="pro-lock-title">Pro 功能</h3>
+                        <p class="pro-lock-message">Pro 功能：获取完整策略分析与情景推演，帮助你更安全决策</p>
+                        <button class="pro-lock-upgrade-btn" onclick="requestTemporaryUnlock()">临时解锁体验</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 情景推演 -->
+            <section class="card pro-card">
+                <div class="card-header">
+                    <h2 class="card-title">情景推演</h2>
+                    <span class="card-icon">🔮</span>
+                    <span class="pro-badge">Pro</span>
+                </div>
+                <div class="pro-card-inner">
+                    <div class="simulation">
+                    <div class="simulation-intro">
+                        基于当前量化状态，推演不同市场情景下的应对方案
+                    </div>
+
+                    <div class="scenario-list">
+                        <!-- 下跌5%情景 -->
+                        <div class="scenario-item">
+                            <div class="scenario-header">
+                                <h3 id="scenario-drop5-title" class="scenario-title">下跌5%</h3>
+                            </div>
+                            <div class="scenario-body">
+                                <div class="scenario-metrics">
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">风险变化</span>
+                                        <span id="scenario-drop5-risk-level" class="scenario-risk-level">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">得分变化</span>
+                                        <span id="scenario-drop5-risk-change" class="risk-change">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">策略调整</span>
+                                        <span id="scenario-drop5-adjust" class="scenario-adjust">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">仓位建议</span>
+                                        <span id="scenario-drop5-position" class="scenario-position">--</span>
+                                    </div>
+                                </div>
+                                <div class="scenario-content">
+                                    <p id="scenario-drop5-reason" class="scenario-reason">--</p>
+                                    <p id="scenario-drop5-principle" class="scenario-principle">--</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 下跌10%情景 -->
+                        <div class="scenario-item">
+                            <div class="scenario-header">
+                                <h3 id="scenario-drop10-title" class="scenario-title">下跌10%</h3>
+                            </div>
+                            <div class="scenario-body">
+                                <div class="scenario-metrics">
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">风险变化</span>
+                                        <span id="scenario-drop10-risk-level" class="scenario-risk-level">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">得分变化</span>
+                                        <span id="scenario-drop10-risk-change" class="risk-change">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">策略调整</span>
+                                        <span id="scenario-drop10-adjust" class="scenario-adjust">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">仓位建议</span>
+                                        <span id="scenario-drop10-position" class="scenario-position">--</span>
+                                    </div>
+                                </div>
+                                <div class="scenario-content">
+                                    <p id="scenario-drop10-reason" class="scenario-reason">--</p>
+                                    <p id="scenario-drop10-principle" class="scenario-principle">--</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 上涨5%情景 -->
+                        <div class="scenario-item">
+                            <div class="scenario-header">
+                                <h3 id="scenario-rise5-title" class="scenario-title">上涨5%</h3>
+                            </div>
+                            <div class="scenario-body">
+                                <div class="scenario-metrics">
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">风险变化</span>
+                                        <span id="scenario-rise5-risk-level" class="scenario-risk-level">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">得分变化</span>
+                                        <span id="scenario-rise5-risk-change" class="risk-change">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">策略调整</span>
+                                        <span id="scenario-rise5-adjust" class="scenario-adjust">--</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <span class="metric-label">仓位建议</span>
+                                        <span id="scenario-rise5-position" class="scenario-position">--</span>
+                                    </div>
+                                </div>
+                                <div class="scenario-content">
+                                    <p id="scenario-rise5-reason" class="scenario-reason">--</p>
+                                    <p id="scenario-rise5-principle" class="scenario-principle">--</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="simulation-disclaimer">
+                        * 情景推演基于当前量化状态和规则推演，不构成预测或投资建议
+                    </div>
+                </div>
+                </div>
+                <!-- Pro 锁定遮罩 -->
+                <div class="pro-lock-overlay">
+                    <div class="pro-lock-content">
+                        <div class="pro-lock-icon">🔒</div>
+                        <h3 class="pro-lock-title">Pro 功能</h3>
+                        <p class="pro-lock-message">Pro 功能：获取完整策略分析与情景推演，帮助你更安全决策</p>
+                        <button class="pro-lock-upgrade-btn" onclick="requestTemporaryUnlock()">临时解锁体验</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Pro 内测申请弹窗 -->
+    <div id="beta-modal" class="beta-modal">
+        <div class="beta-modal-overlay" onclick="closeBetaModal()"></div>
+        <div class="beta-modal-content">
+            <div class="beta-modal-header">
+                <h3 class="beta-modal-title">申请 Pro 内测</h3>
+                <button class="beta-modal-close" onclick="closeBetaModal()">&times;</button>
+            </div>
+            <div class="beta-modal-body">
+                <p class="beta-modal-desc">请留下您的联系方式，我们将通过邮件/微信邀请您参与 Pro 功能内测</p>
+                <form id="beta-form" class="beta-form" onsubmit="submitBetaForm(event)">
+                    <div class="beta-form-group">
+                        <label class="beta-form-label" for="beta-email">邮箱地址</label>
+                        <input type="email" id="beta-email" class="beta-form-input" placeholder="your@email.com" required>
+                    </div>
+                    <div class="beta-form-group">
+                        <label class="beta-form-label" for="beta-wechat">微信号（可选）</label>
+                        <input type="text" id="beta-wechat" class="beta-form-input" placeholder="您的微信号">
+                    </div>
+                    <div class="beta-form-group">
+                        <label class="beta-form-label" for="beta-reason">申请理由（可选）</label>
+                        <textarea id="beta-reason" class="beta-form-textarea" rows="3" placeholder="简单描述您的使用场景..."></textarea>
+                    </div>
+                    <button type="submit" class="beta-form-submit">提交申请</button>
+                </form>
+                <div id="beta-success" class="beta-success" style="display: none;">
+                    <div class="beta-success-icon">✓</div>
+                    <p class="beta-success-text">申请提交成功！</p>
+                    <p class="beta-success-desc">我们将在1-3个工作日内通过邮件/微信与您联系</p>
+                    <button class="beta-success-close" onclick="closeBetaModal()">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <!-- 免责声明 -->
+            <div class="disclaimer-section">
+                <h3 class="disclaimer-title">免责声明</h3>
+                <div class="disclaimer-content">
+                    <p class="disclaimer-text">本工具提供的所有数据、分析和建议仅供参考，不构成任何投资建议或买卖依据。股市投资存在风险，历史数据和量化模型不能保证未来收益。</p>
+                    <p class="disclaimer-text">用户应根据自身风险承受能力和投资目标独立做出决策，并对自己的投资行为负责。本工具不对因使用本工具信息而导致的任何直接或间接损失承担责任。</p>
+                    <p class="disclaimer-text">本工具所使用的市场数据为模拟数据，仅供演示工具功能，不代表真实市场情况。</p>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="footer-copyright">本工具仅供量化分析参考，不构成投资建议</p>
+                <p class="footer-notice">投资有风险，入市需谨慎</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 脚本 -->
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

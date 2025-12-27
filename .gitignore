@@ -1,0 +1,36 @@
+# 依赖
+node_modules/
+package-lock.json
+
+# 环境变量
+.env
+.env.local
+.env.production
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+
+# 临时文件
+nul
+.DS_Store
+Thumbs.db
+
+# 数据库
+*.sql
+*.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 测试
+coverage/
+.nyc_output/
+
+# 构建
+dist/
+build/

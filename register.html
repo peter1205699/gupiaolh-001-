@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 量化分析辅助决策</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 60px auto;
+            background-color: #161b22;
+            border-radius: 12px;
+            padding: 40px;
+            border: 1px solid #30363d;
+        }
+        .auth-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #f0f6fc;
+            text-align: center;
+            margin: 0 0 8px 0;
+        }
+        .auth-subtitle {
+            font-size: 14px;
+            color: #8b949e;
+            text-align: center;
+            margin: 0 0 32px 0;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #f0f6fc;
+        }
+        .form-input {
+            padding: 12px 16px;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #f0f6fc;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+        .form-input::placeholder {
+            color: #6e7681;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #6e7681;
+            margin-top: -4px;
+        }
+        .form-error {
+            font-size: 12px;
+            color: #ff7b72;
+            margin-top: -4px;
+            display: none;
+        }
+        .form-error.show {
+            display: block;
+        }
+        .auth-submit {
+            padding: 12px;
+            background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+        .auth-submit:hover {
+            background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
+        }
+        .auth-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #21262d;
+        }
+        .auth-link {
+            color: #58a6ff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+        .auth-message {
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .auth-message.show {
+            display: block;
+        }
+        .auth-message.success {
+            background-color: rgba(46, 160, 67, 0.15);
+            color: #3fb950;
+            border: 1px solid #238636;
+        }
+        .auth-message.error {
+            background-color: rgba(218, 54, 51, 0.15);
+            color: #ff7b72;
+            border: 1px solid #da3633;
+        }
+        .auth-back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+        .auth-back-link:hover {
+            color: #f0f6fc;
+        }
+        .auth-back-icon {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="auth-back-link">
+        <span class="auth-back-icon">←</span>
+        <span>返回首页</span>
+    </a>
+
+    <div class="auth-container">
+        <h1 class="auth-title">注册账号</h1>
+        <p class="auth-subtitle">创建账号，解锁 Pro 功能</p>
+
+        <div id="auth-message" class="auth-message"></div>
+
+        <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label class="form-label" for="username">用户名</label>
+                <input type="text" id="username" class="form-input" placeholder="请输入用户名" required minlength="3" maxlength="20">
+                <p class="form-hint">3-20 个字符</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">邮箱地址</label>
+                <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
+                <p id="email-error" class="form-error">请输入有效的邮箱地址</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">密码</label>
+                <input type="password" id="password" class="form-input" placeholder="请输入密码" required minlength="6">
+                <p class="form-hint">至少 6 个字符</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirm-password">确认密码</label>
+                <input type="password" id="confirm-password" class="form-input" placeholder="请再次输入密码" required>
+                <p id="password-error" class="form-error">两次输入的密码不一致</p>
+            </div>
+
+            <button type="submit" id="submit-btn" class="auth-submit">注册</button>
+        </form>
+
+        <div class="auth-footer">
+            已有账号？<a href="login.html" class="auth-link">立即登录</a>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>
