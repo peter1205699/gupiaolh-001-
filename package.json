@@ -1,0 +1,13 @@
+{
+  "name": "gupiaolh-001",
+  "version": "1.0.0",
+  "description": "量化分析辅助决策平台",
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "postinstall": "cd backend && npm install"
+  },
+  "engines": {
+    "node": ">=16.x"
+  },
+  "cacheDirectories": ["backend/node_modules"]
+}
