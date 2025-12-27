@@ -1,27 +1,46 @@
-# ===================================
-# 量化分析平台 - 后端 Dockerfile
-# ===================================
+# ------------------- 构建阶段 -------------------
+FROM node:20-alpine AS builder
 
-FROM node:18-alpine
-
-# 设置工作目录
+# 设置全局工作目录为 /app（Vercel 默认）
 WORKDIR /app
 
-# 复制 package.json 和 package-lock.json
+# 先复制根目录 package.json（如果根有全局依赖，安装它们）
 COPY package*.json ./
+RUN npm ci --production  # 或 npm install --production，根据需要
 
-# 安装依赖
-RUN npm install --production
+# 切换到 backend 子目录
+WORKDIR /app/backend
 
-# 复制源代码
-COPY . .
+# 复制 backend 的 package.json 和 lockfile（缓存依赖安装）
+COPY backend/package*.json ./
 
-# 暴露端口
+# 安装 backend 生产依赖
+RUN npm ci --production  # npm ci 更严格、更快（推荐），或用 npm install --production
+
+# 复制 backend 全部源码
+COPY backend/ ./
+
+# 如果 backend 有 build 脚本（如 tsc、esbuild），执行它
+# RUN npm run build   # 如果没有 build 脚本，删除或注释这行
+
+# ------------------- 生产阶段（减小镜像大小） -------------------
+FROM node:20-alpine
+
+# 设置最终工作目录为 backend
+WORKDIR /app/backend
+
+# 从 builder 复制 node_modules 和源码
+COPY --from=builder /app/backend/node_modules ./node_modules
+COPY --from=builder /app/backend ./
+
+# 复制根目录 package.json（如果启动命令依赖它，可选）
+COPY package*.json /app/
+
+# 暴露端口（假设你的后端用 3000，根据实际调整）
 EXPOSE 3000
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# 设置生产环境
+ENV NODE_ENV=production
 
-# 启动服务
-CMD ["node", "server.js"]
+# 启动命令：直接运行 backend 的 start 脚本
+CMD ["npm", "start"]
